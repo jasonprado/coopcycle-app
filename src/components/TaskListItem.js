@@ -4,7 +4,6 @@ import { Icon, Text } from 'native-base'
 import { SwipeRow } from 'react-native-swipe-list-view'
 import PropTypes from 'prop-types'
 import moment from 'moment'
-import _ from 'lodash'
 import { withTranslation } from 'react-i18next'
 
 import { greenColor, redColor } from '../styles/common'
@@ -14,12 +13,10 @@ import {
   failedIconName,
   taskTypeIconName,
 } from '../navigation/task/styles/common'
+import { selectTasksWithColor } from '../coopcycle-frontend-js/index'
+import {connect} from 'react-redux'
 
 const styles = StyleSheet.create({
-  itemBody: {
-    paddingHorizontal: 5,
-    width: '80%',
-  },
   itemContainer: {
     backgroundColor: '#ffffff',
   },
@@ -27,9 +24,20 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+  },
+  itemIcon: {
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    height: '100%',
+  },
+  itemBody: {
     paddingVertical: 15,
-    paddingHorizontal: 15,
+    paddingHorizontal: 5,
+    flexGrow: 1,
+  },
+  itemNavigation: {
+    color: '#cccccc',
+    paddingRight: 15,
   },
   disabled: {
     opacity: 0.4,
@@ -119,7 +127,7 @@ class TaskListItem extends Component {
 
   render() {
 
-    const { task, index } = this.props
+    const { color, task, index } = this.props
 
     const itemStyle = [ styles.item ]
     const textStyle = [ styles.text ]
@@ -171,7 +179,8 @@ class TaskListItem extends Component {
           underlayColor={ '#efefef' }
           testID={ `task:${index}` }>
           <View style={ itemStyle }>
-            <View style={{ alignItems: 'center', justifyContent: 'space-around', height: '100%' }}>
+            <View style={{backgroundColor: color, width: 8, height: '100%', marginRight: 12}}/>
+            <View style={ styles.itemIcon }>
               <TaskTypeIcon task={ task } />
               <TaskStatusIcon task={ task } />
             </View>
@@ -182,7 +191,7 @@ class TaskListItem extends Component {
               <Text numberOfLines={ 1 } style={ textStyle }>{ task.address.streetAddress }</Text>
               <Text style={ textStyle }>{ moment(task.doneAfter).format('LT') } - { moment(task.doneBefore).format('LT') }</Text>
             </View>
-            <Icon style={{ color: '#cccccc' }} name="ios-arrow-forward" />
+            <Icon style={ styles.itemNavigation } name="ios-arrow-forward" />
           </View>
         </TouchableHighlight>
       </SwipeRow>
@@ -204,6 +213,17 @@ TaskListItem.propTypes = {
   onPressRight: PropTypes.func,
 }
 
+function mapStateToProps(state, ownProps) {
+  const tasksWithColor = selectTasksWithColor(state.dispatch)
+
+  const color = Object.prototype.hasOwnProperty.call(tasksWithColor, ownProps.task['@id']) ?
+    tasksWithColor[ownProps.task['@id']] : '#ffffff'
+
+  return {
+    color
+  }
+}
+
 // We need to use "withRef" prop,
 // for react-native-swipe-list-view CellRenderer to not trigger a warning
-export default withTranslation([ 'common' ], { withRef: true })(TaskListItem)
+export default connect(mapStateToProps)(withTranslation([ 'common' ], { withRef: true })(TaskListItem))
